@@ -96,8 +96,11 @@ def format_game_summary(game, perspective_team):
     if game.empty:
         return "No game found"
     row = game.iloc[0]
-    opponent = row['Away Team'] if row['Home Team'] == perspective_team else row['Home Team']
-    return f"vs. {opponent} on {row['Date'].strftime('%d/%m/%Y')}"
+    is_home = row['Home Team'] == perspective_team
+    opponent = row['Away Team'] if is_home else row['Home Team']
+    location = "Home game" if is_home else "Away game"
+    date_str = row['Date'].strftime('%d/%m/%Y')
+    return f"{location} vs. {opponent} on {date_str}"
 
 def load_commentary(home_team, away_team):
     conn = sqlite3.connect('commentary.db')
