@@ -104,10 +104,13 @@ def update_dashboard(home_team, away_team):
 
     # Find next/previous games for home and away teams
     match_index = match.name
-    home_next_game = df_matches[(df_matches['Home Team'] == home_team) | (df_matches['Away Team'] == home_team)].loc[df_matches.index > match_index].head(1)
-    home_prev_game = df_matches[(df_matches['Home Team'] == home_team) | (df_matches['Away Team'] == home_team)].loc[df_matches.index < match_index].tail(1)
-    away_next_game = df_matches[(df_matches['Home Team'] == away_team) | (df_matches['Away Team'] == away_team)].loc[df_matches.index > match_index].head(1)
-    away_prev_game = df_matches[(df_matches['Home Team'] == away_team) | (df_matches['Away Team'] == away_team)].loc[df_matches.index < match_index].tail(1)
+    home_matches = df_matches[(df_matches['Home Team'] == home_team) | (df_matches['Away Team'] == home_team)]
+    home_next_game = home_matches.loc[home_matches.index > match_index].head(1)
+    home_prev_game = home_matches.loc[home_matches.index < match_index].tail(1)
+
+    away_matches = df_matches[(df_matches['Home Team'] == away_team) | (df_matches['Away Team'] == away_team)]
+    away_next_game = away_matches.loc[away_matches.index > match_index].head(1)
+    away_prev_game = away_matches.loc[away_matches.index < match_index].tail(1)
 
     # Format the output for the 'Game Info' panel
     game_info = html.Div([
@@ -117,14 +120,14 @@ def update_dashboard(home_team, away_team):
         html.P(f"Away Team: {match['Away Team']}"),
         html.Hr(),
         html.H5(f"Previous game for {home_team}:"),
-        html.P(f"vs. {home_prev_game['Away Team'].iloc[0]} on {home_prev_game['Date'].iloc[0].strftime('%d/%m/%Y')}" if not home_prev_game.empty else "No previous game found"),
+        html.P(f"vs. {home_prev_game.iloc[0]['Away Team']} on {home_prev_game.iloc[0]['Date'].strftime('%d/%m/%Y')}" if not home_prev_game.empty else "No previous game found"),
         html.H5(f"Next game for {home_team}:"),
-        html.P(f"vs. {home_next_game['Away Team'].iloc[0]} on {home_next_game['Date'].iloc[0].strftime('%d/%m/%Y')}" if not home_next_game.empty else "No next game found"),
+        html.P(f"vs. {home_next_game.iloc[0]['Away Team']} on {home_next_game.iloc[0]['Date'].strftime('%d/%m/%Y')}" if not home_next_game.empty else "No next game found"),
         html.Hr(),
         html.H5(f"Previous game for {away_team}:"),
-        html.P(f"vs. {away_prev_game['Home Team'].iloc[0]} on {away_prev_game['Date'].iloc[0].strftime('%d/%m/%Y')}" if not away_prev_game.empty else "No previous game found"),
+        html.P(f"vs. {away_prev_game.iloc[0]['Home Team']} on {away_prev_game.iloc[0]['Date'].strftime('%d/%m/%Y')}" if not away_prev_game.empty else "No previous game found"),
         html.H5(f"Next game for {away_team}:"),
-        html.P(f"vs. {away_next_game['Home Team'].iloc[0]} on {away_next_game['Date'].iloc[0].strftime('%d/%m/%Y')}" if not away_next_game.empty else "No next game found")
+        html.P(f"vs. {away_next_game.iloc[0]['Home Team']} on {away_next_game.iloc[0]['Date'].strftime('%d/%m/%Y')}" if not away_next_game.empty else "No next game found")
     ])
 
     # Load existing commentary from the database
