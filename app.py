@@ -2,6 +2,7 @@ import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 import pandas as pd
+from datetime import datetime
 import sqlite3
 
 # --- 1. Data Setup ---
@@ -57,6 +58,10 @@ app.layout = html.Div([
         html.P(id='validation-message', style={'color': 'red'})
     ], style={'padding': '20px', 'borderBottom': '1px solid #ddd'}),
 
+    html.Button("See Calendar", id="calendar-button", n_clicks=0),
+    dcc.Location(id='url', refresh=False),
+    dcc.Store(id='calendar-nav', data=False),
+
     html.Div(style={'display': 'flex', 'padding': '20px'}, children=[
         html.Div([
             html.H3('Game Info'),
@@ -92,15 +97,26 @@ def get_prev_next_game(team, match_date):
     next_game = matches[matches['Date'] > match_date].head(1)
     return prev_game, next_game
 
-def format_game_summary(game, perspective_team):
+def format_game_summary(game, perspective_team, is_next_game, reference_date):
     if game.empty:
         return "No game found"
+
     row = game.iloc[0]
     is_home = row['Home Team'] == perspective_team
     opponent = row['Away Team'] if is_home else row['Home Team']
     location = "Home game" if is_home else "Away game"
-    date_str = row['Date'].strftime('%d/%m/%Y')
-    return f"{location} vs. {opponent} on {date_str}"
+    match_date = row['Date']
+
+    # Calculate days difference relative to reference_date
+    delta_days = (match_date.date() - reference_date.date()).days
+
+    if is_next_game:
+        prefix = f"In {delta_days} days"
+    else:
+        prefix = f"{abs(delta_days)} days ago"
+
+    date_str = match_date.strftime('%d/%m/%Y')
+    return f"{prefix} {location} vs. {opponent} on {date_str}"
 
 def load_commentary(home_team, away_team):
     conn = sqlite3.connect('commentary.db')
@@ -114,6 +130,14 @@ def load_commentary(home_team, away_team):
     return result[0] if result else ""
 
 # --- 4. Callbacks ---
+@app.callback(
+    Output('url', 'pathname'),
+    Input('calendar-button', 'n_clicks'),
+    prevent_initial_call=True
+)
+def go_to_calendar(n_clicks):
+    return '/calendar'
+
 @app.callback(
     [Output('game-info-output', 'children'),
      Output('commentary-textarea', 'value'),
@@ -147,18 +171,18 @@ def update_dashboard(home_team, away_team):
         html.Hr(),
 
         html.H5(f"Previous game for {home_team}:"),
-        html.P(format_game_summary(home_prev, home_team)),
+        html.P(format_game_summary(home_prev, home_team, is_next_game=False, reference_date=match_date)),
 
         html.H5(f"Next game for {home_team}:"),
-        html.P(format_game_summary(home_next, home_team)),
+        html.P(format_game_summary(home_next, home_team, is_next_game=True, reference_date=match_date)),
 
         html.Hr(),
 
         html.H5(f"Previous game for {away_team}:"),
-        html.P(format_game_summary(away_prev, away_team)),
+        html.P(format_game_summary(away_prev, away_team, is_next_game=False, reference_date=match_date)),
 
         html.H5(f"Next game for {away_team}:"),
-        html.P(format_game_summary(away_next, away_team)),
+        html.P(format_game_summary(away_next, away_team, is_next_game=True, reference_date=match_date)),
     ])
 
     return game_info, commentary_text, ""
