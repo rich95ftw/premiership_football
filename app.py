@@ -105,17 +105,18 @@ def format_game_summary(game, perspective_team, is_next_game, reference_date):
     opponent = row['Away Team'] if is_home else row['Home Team']
     location = "Home game" if is_home else "Away game"
     match_date = row['Date']
+    match_day = match_date.strftime('%A')
 
     # Calculate days difference relative to reference_date
     delta_days = (match_date.date() - reference_date.date()).days
 
     if is_next_game:
-        prefix = f"In {delta_days} days"
+        prefix = f"In {delta_days} days:"
     else:
-        prefix = f"{abs(delta_days)} days ago"
+        prefix = f"{abs(delta_days)} days ago:"
 
     date_str = match_date.strftime('%d/%m/%Y')
-    return f"{prefix} {location} vs. {opponent} on {date_str}"
+    return f"{prefix} {location} vs. {opponent} on {match_day} {date_str}"
 
 def load_commentary(home_team, away_team):
     conn = sqlite3.connect('commentary.db')
@@ -163,6 +164,7 @@ def update_dashboard(home_team, away_team):
 
     game_info = html.Div([
         html.P(f"Match Date: {match_date.strftime('%d/%m/%Y')}"),
+        html.P(f"Match Day: {match_date.strftime('%A')}"),
         html.P(f"Match Time: {match_date.strftime('%H:%M:%S')}"),
         html.P(f"Home Team: {home_team}"),
         html.P(f"Away Team: {away_team}"),
